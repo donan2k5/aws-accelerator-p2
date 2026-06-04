@@ -1,0 +1,55 @@
+# Local .terraform directories (but keep lock file for reproducibility)
+**/.terraform/
+# .terraform.lock.hcl is committed for reproducibility
+
+# .tfstate files (local state)
+*.tfstate
+*.tfstate.*
+terraform.tfstate*
+
+# Ignore only secret tfvars, not the main one
+terraform.tfvars.local
+*.secrets.tfvars
+.terraform.tfvars
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude secret/local .tfvars files only
+*.local.tfvars
+*.secrets.tfvars
+
+# Include main terraform.tfvars and examples
+!terraform.tfvars
+!example.tfvars
+
+# Ignore override files, as they are usually used to override resources locally
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include example overrides
+!example_override.tf
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore .kube directory
+.kube/
+*.crt
+*.key
+*.pem
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+.DS_Store
+Thumbs.db

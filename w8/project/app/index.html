@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello XBrain</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .xbrain {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .info {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-top: 30px;
+        }
+
+        .info-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status {
+            margin-top: 40px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            color: #2e7d32;
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 40px;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="xbrain">Hello XBrain</span></h1>
+
+        <div class="info">
+            <div class="info-item">
+                <span class="label">Pod Name:</span><br>
+                <span class="value" id="pod-name">Loading...</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Timestamp:</span><br>
+                <span class="value" id="timestamp">Loading...</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Server:</span><br>
+                <span class="value" id="server">nginx (Docker)</span>
+            </div>
+        </div>
+
+        <div class="status">
+            ✓ Application running successfully on Kubernetes
+        </div>
+
+        <div class="footer">
+            <p>AWS Accelerator Phase 2 - Kubernetes Lab</p>
+        </div>
+    </div>
+
+    <script>
+        // Get pod name from hostname
+        fetch('/api/hostname')
+            .then(r => r.text())
+            .catch(() => document.getElementById('pod-name').textContent = 'kubernetes-pod');
+
+        // Update timestamp
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Try to get pod info from metadata
+        document.getElementById('pod-name').textContent = window.location.hostname || 'xbrain-pod-' + Math.random().toString(36).substr(2, 9);
+    </script>
+</body>
+</html>

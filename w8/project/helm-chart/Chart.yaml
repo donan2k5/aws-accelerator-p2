@@ -1,0 +1,6 @@
+apiVersion: v2
+name: xbrain-app
+description: XBrain K8s app on AWS Accelerator
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
