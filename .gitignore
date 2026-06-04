@@ -18,3 +18,7 @@ override.tf.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Project docs
+plan.md
+requirement.md
