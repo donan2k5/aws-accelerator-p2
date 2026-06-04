@@ -6,9 +6,9 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.11"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
     }
   }
 }
@@ -25,11 +25,6 @@ provider "aws" {
   }
 }
 
-provider "helm" {
-  kubernetes {
-    config_path = pathexpand("~/.kube/config")
-  }
-}
 
 locals {
   environment_name = "xbrain-k8s-lab"
