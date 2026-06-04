@@ -95,3 +95,50 @@ w8/project/
 └── README.md
 ```
 
+---
+
+## ≥2 Providers được wire cùng Terraform config
+
+**AWS Provider**
+- VPC (10.0.0.0/16)
+- 2 Subnets (AZ1: 10.0.2.0/24, AZ2: 10.0.3.0/24)
+- ALB (load balancer multi-AZ)
+- EC2 t3.medium (chạy minikube)
+- Security Groups (SSH:22, HTTP:80, NodePort:30080)
+- IAM roles & policies
+
+**Random Provider**
+- `random_id.deployment` → Tạo ID duy nhất cho deployment
+
+---
+
+## Giải thích thiết kế: Tại sao minikube + expose port?
+
+**Tại sao minikube (K8s single-node)?**
+- Minikube là K8s cluster tối thiểu, hoàn toàn tương thích với production K8s
+- Có: Deployment, Service, NodePort, Labels, Selectors, Health Checks
+- Dễ test K8s patterns mà không cần managed K8s (EKS) - tiết kiệm chi phí
+
+**Tại sao expose port 30080 khi start minikube?**
+```bash
+minikube start --driver=docker --ports=30080:30080
+```
+- NodePort (30080) của K8s Service cần forward ra host (EC2)
+- ALB → EC2:30080 → K8s Service:30080 → Pod:80 (nginx)
+- Nếu không expose: ALB không reach được NodePort → Health check fail → Unhealthy
+
+**Lưu lượng:**
+```
+Client (80)
+    ↓
+ALB (port 80)
+    ↓
+EC2 (port 30080)  ← Minikube expose cổng này
+    ↓
+K8s Service NodePort (30080)
+    ↓
+Pod nginx (port 80)
+    ↓
+index.html
+```
+
