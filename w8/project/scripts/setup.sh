@@ -41,18 +41,74 @@ curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikub
 chmod +x minikube-linux-amd64
 mv minikube-linux-amd64 /usr/local/bin/minikube
 
-# Install Helm
-echo "=== Installing Helm ==="
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Start minikube
+# Start minikube with port exposure
 echo "=== Starting minikube ==="
-su - ubuntu -c "minikube start --driver=docker --cpus=2 --memory=2048"
+su - ubuntu -c "minikube start --driver=docker --cpus=2 --memory=2048 --ports=${nodeport}:${nodeport}"
 
 # Wait for minikube to be ready
 echo "=== Waiting for minikube ==="
 su - ubuntu -c "minikube status"
 su - ubuntu -c "kubectl cluster-info"
 
+# Deploy K8s resources via kubectl
+echo "=== Deploying K8s resources ==="
+cat > /tmp/deployment.yaml << 'YAML'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xbrain-app
+  labels:
+    app: xbrain
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: xbrain
+  template:
+    metadata:
+      labels:
+        app: xbrain
+    spec:
+      containers:
+      - name: nginx
+        image: ${docker_image}
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xbrain-service
+  labels:
+    app: xbrain
+spec:
+  type: NodePort
+  selector:
+    app: xbrain
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: ${nodeport}
+    protocol: TCP
+YAML
+
+su - ubuntu -c "kubectl apply -f /tmp/deployment.yaml"
+
+# Wait for deployment
+echo "=== Waiting for pods to be ready ==="
+su - ubuntu -c "kubectl rollout status deployment/xbrain-app --timeout=300s"
+
+# Show status
+echo "=== Deployment Status ==="
+su - ubuntu -c "kubectl get pods,svc"
+
 echo "=== EC2 Setup Complete ==="
-echo "Minikube is running. Ready for Terraform Helm provider to deploy apps."
+echo "K8s resources deployed successfully!"
+echo "Service accessible on port ${nodeport}"
