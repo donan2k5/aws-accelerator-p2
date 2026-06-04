@@ -105,11 +105,6 @@
 
         <div class="info">
             <div class="info-item">
-                <span class="label">Pod Name:</span><br>
-                <span class="value" id="pod-name">Loading...</span>
-            </div>
-
-            <div class="info-item">
                 <span class="label">Timestamp:</span><br>
                 <span class="value" id="timestamp">Loading...</span>
             </div>
@@ -130,11 +125,6 @@
     </div>
 
     <script>
-        // Get pod name from hostname
-        fetch('/api/hostname')
-            .then(r => r.text())
-            .catch(() => document.getElementById('pod-name').textContent = 'kubernetes-pod');
-
         // Update timestamp
         function updateTime() {
             const now = new Date();
@@ -142,9 +132,6 @@
         }
         updateTime();
         setInterval(updateTime, 1000);
-
-        // Try to get pod info from metadata
-        document.getElementById('pod-name').textContent = window.location.hostname || 'xbrain-pod-' + Math.random().toString(36).substr(2, 9);
     </script>
 </body>
 </html>

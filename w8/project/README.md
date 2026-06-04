@@ -1,43 +1,54 @@
-# XBrain K8s on AWS
+# XBrain K8s Lab on AWS
 
-Deploy K8s app trên AWS với Terraform + Helm + ALB.
+Multi-AZ Kubernetes deployment on AWS using Terraform, minikube, and ALB.
 
-## Kiến trúc
+## Architecture
 
 ```
 Internet (port 80)
     ↓
-ALB (Public Subnet 1: 10.0.2.0/24)
+ALB (Multi-AZ: AZ1 10.0.2.0/24 + AZ2 10.0.4.0/24)
     ↓ routes to
-EC2 (Public Subnet 2: 10.0.3.0/24)
+EC2 t3.medium (10.0.3.0/24, AZ1)
     ↓ runs
-minikube + Helm + nginx pods (NodePort 30080)
+minikube + kubectl + xbrain-app pods (NodePort 30080)
     ↓
-"Hello XBrain" page
+Custom "Hello XBrain" page
 ```
 
-**Providers:**
-- AWS: VPC, subnets, EC2, ALB
-- Helm: Deploy K8s Deployment + Service
+**Infrastructure:**
+- AWS: VPC (10.0.0.0/16), ALB (multi-AZ), EC2, Security Groups
+- Kubernetes: minikube on EC2, 2x nginx-based app pods
+- Docker: Custom image (tuphucnguyen20051/xbrain-app:latest)
 
 ---
 
-## Cấu trúc
+## Project Structure
 
 ```
 w8/project/
-├── terraform/        # Terraform configs
-├── scripts/setup.sh  # EC2 setup (Docker, minikube, Helm)
-├── helm-chart/       # K8s Deployment + Service
-├── app/              # index.html + Dockerfile
+├── terraform/
+│   ├── main.tf              # Provider config
+│   ├── vpc.tf               # VPC, subnets, IGW, routing
+│   ├── ec2.tf               # EC2 instance + IAM
+│   ├── alb.tf               # ALB, target group, listener
+│   ├── security_groups.tf   # SG rules (SSH, HTTP, NodePort)
+│   ├── kubernetes.tf        # K8s outputs
+│   ├── terraform.tfvars     # Variables (region, CIDR, image)
+│   └── variables.tf         # Variable definitions
+├── scripts/
+│   └── setup.sh             # EC2 user_data: Docker, minikube, kubectl
+├── app/
+│   ├── Dockerfile           # nginx + custom index.html
+│   └── index.html           # React-style "Hello XBrain" UI
 └── README.md
 ```
 
 ---
 
-## Chạy (4 bước)
+## Quick Start
 
-### 1. Init
+### 1. Initialize
 ```bash
 cd terraform
 terraform init
@@ -48,29 +59,47 @@ terraform init
 terraform plan
 ```
 
-### 3. Apply
+### 3. Deploy
 ```bash
-terraform apply
+terraform apply -auto-approve
 ```
-⏳ Chờ 10-15 phút (EC2 + minikube + Helm deploy)
+⏳ Wait 10-15 minutes (EC2 boot + minikube + pod deployment)
 
 ### 4. Access
 ```bash
-# Lấy URL
+# Get ALB URL
 terraform output app_url
 
-# Mở browser
-http://<ALB-DNS-NAME>
+# Open in browser
+http://<ALB-DNS>
 ```
-
-✅ Thấy "Hello XBrain"
 
 ---
 
-## Dọn dẹp
+## SSH Access
+
+EC2 allows SSH (port 22 open):
+```bash
+# Get EC2 IP
+EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null || \
+  aws ec2 describe-instances --filters "Name=tag:Name,Values=xbrain-k8s-lab-ec2" \
+  --query 'Reservations[0].Instances[0].PublicIpAddress' --region us-east-1 --output text)
+
+# SSH in
+ssh -i <your-key.pem> ubuntu@$EC2_IP
+
+# Debug K8s
+kubectl get pods -o wide
+kubectl logs -l app=xbrain
+minikube status
+```
+
+---
+
+## Cleanup
 
 ```bash
-terraform destroy
+terraform destroy -auto-approve
 ```
 
 ---
@@ -78,48 +107,58 @@ terraform destroy
 ## Outputs
 
 ```
-app_url           = "http://xbrain-k8s-lab-alb-xxx.us-east-1.elb.amazonaws.com"
-ec2_instance_id   = "i-xxx"
-ec2_private_ip    = "10.0.3.x"
-helm_release_name = "xbrain"
+app_url              = "http://xbrain-k8s-lab-alb-xxx.us-east-1.elb.amazonaws.com"
+alb_dns_name         = "xbrain-k8s-lab-alb-xxx.us-east-1.elb.amazonaws.com"
+ec2_instance_id      = "i-xxx"
+ec2_public_ip        = "x.x.x.x"
+ec2_private_ip       = "10.0.3.x"
+vpc_id               = "vpc-xxx"
 ```
 
 ---
 
-## Debug
+## Customization
 
+### Change Docker Image
+Edit `terraform/terraform.tfvars`:
+```hcl
+docker_image = "your-username/your-image:latest"
+```
+
+Then redeploy:
 ```bash
-# Check EC2 logs
-terraform output deployment_status
-# → tail -f /var/log/cloud-init-output.log (trên EC2)
+terraform apply -auto-approve
+```
 
-# Check Helm
-helm list
-helm status xbrain
-
-# Check K8s
-kubectl get pods,svc
+### Modify HTML
+Edit `app/index.html`, then rebuild and push:
+```bash
+cd app
+docker build -t your-username/xbrain-app:latest .
+docker push your-username/xbrain-app:latest
 ```
 
 ---
 
-## Chi phí
+## Costs
 
 - EC2 t3.medium: ~$0.04/h
 - ALB: ~$0.02/h
-- **Total: ~$0.06/h** (~$50/tháng nếu chạy 24/7)
+- **Total: ~$0.06/h** (~$50/month if 24/7)
 
-**Nhớ destroy khi không dùng!** 🔥
-
----
-
-## Học được gì
-
-✅ AWS VPC + ALB + EC2
-✅ Terraform providers (AWS + Helm)
-✅ Kubernetes + Helm
-✅ Infrastructure as Code
+**Destroy when not in use!** 🔥
 
 ---
 
-**Built for XBrain Phase 2 AWS Accelerator**
+## Learning Outcomes
+
+✅ AWS VPC, ALB, EC2, Security Groups
+✅ Terraform multi-provider setup
+✅ Kubernetes (minikube) on EC2
+✅ Docker containerization
+✅ Infrastructure as Code (IaC)
+✅ Multi-AZ deployment patterns
+
+---
+
+**XBrain Phase 2 AWS Accelerator Lab**

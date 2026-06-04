@@ -8,6 +8,20 @@ resource "aws_security_group" "ec2" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "ec2_ssh" {
+  security_group_id = aws_security_group.ec2.id
+
+  description = "SSH from anywhere"
+  from_port   = 22
+  to_port     = 22
+  ip_protocol = "tcp"
+  cidr_ipv4   = "0.0.0.0/0"
+
+  tags = {
+    Name = "SSH"
+  }
+}
+
 resource "aws_vpc_security_group_ingress_rule" "ec2_nodeport" {
   security_group_id = aws_security_group.ec2.id
 
@@ -26,8 +40,6 @@ resource "aws_vpc_security_group_egress_rule" "ec2_all" {
   security_group_id = aws_security_group.ec2.id
 
   description = "All outbound traffic"
-  from_port   = 0
-  to_port     = 65535
   ip_protocol = "-1"
   cidr_ipv4   = "0.0.0.0/0"
 
