@@ -1,4 +1,4 @@
-# XBrain K8s Lab on AWS
+﻿# XBrain K8s Lab on AWS
 
 Multi-AZ Kubernetes deployment on AWS using Terraform, minikube, and ALB.
 
@@ -97,6 +97,12 @@ w8/project/
 
 ---
 
+## Evidence
+
+- [Xem evidence](./evidence.md)
+- ![ALB deployment screenshot](./asset/image.png)
+
+---
 ## ≥2 Providers được wire cùng Terraform config
 
 **AWS Provider**
@@ -141,4 +147,5 @@ Pod nginx (port 80)
     ↓
 index.html
 ```
+
 
